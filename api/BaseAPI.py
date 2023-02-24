@@ -54,9 +54,6 @@ class BaseAPI():
         response = self._post("/api/login", inner_payload, remove_header={'Cookie'})
         self.session_id = response["payload"]["sessionId"]
 
-        #Left over, not needed?
-        #self.player_information.user_id = response["payload"]["userId"]
-
     def get_action_time(self, old_action_time=0):
         action_times = [0xfd2c030, 0x18c120b0, 0xdd98840, 0x13ee8a0, 0x1a26560, 0x21526d10, 0xe100190, 0xfbf3830]  # Todo how are those generated
         current_time = (datetime.datetime.utcnow() - datetime.datetime(1,1,1)).total_seconds() * 10**7
@@ -150,76 +147,3 @@ class BaseAPI():
 
 class ExcessTrafficException(Exception):
     pass
-
-class API(BaseAPI):
-    def __init__(self):
-        BaseAPI.__init__(self)
-
-    def POST__api_cleaning_check(self):
-        payload = {}
-        self._post("/api/cleaning/check", payload)
-
-    def POST__api_cleaning_start(self, cleaning_type=1):
-        payload = {
-            "cleaningType": cleaning_type
-        }
-        response = self._post("/api/cleaning/start", payload)
-
-        _data = response["payload"]["cleaningWaveData"]
-        enemies = _data["normalEnemyCount"] + _data["rareEnemyCount"]
-        wave = _data["nextWave"]
-        ap = (_data["normalEnemyCount"] * _data["normalEnemyApRecoveryValue"]) + (_data["rareEnemyCount"] * _data["rareEnemyApRecoveryValue"])
-        exp = (_data["normalEnemyCount"] * _data["normalEnemyExpValue"]) + (_data["rareEnemyCount"] * _data["rareEnemyExpValue"])
-
-        return enemies, wave, ap, exp
-
-    def POST__api_cleaning_end_wave(self, remain_time, current_wave, ap, exp, enemy_down):
-        payload = {
-            "remainTime": remain_time,
-            "currentWave": current_wave,
-            "getAp": ap,
-            "getExp": exp,
-            "getEnemyDown": enemy_down
-        }
-        response = self._post("/api/cleaning/end_wave", payload)
-
-        _data = response["payload"]["cleaningWaveData"]
-        enemies = _data["normalEnemyCount"] + _data["rareEnemyCount"]
-        wave = _data["nextWave"]
-        ap = (_data["normalEnemyCount"] * _data["normalEnemyApRecoveryValue"]) + (_data["rareEnemyCount"] * _data["rareEnemyApRecoveryValue"])
-        exp = (_data["normalEnemyCount"] * _data["normalEnemyExpValue"]) + (_data["rareEnemyCount"] * _data["rareEnemyExpValue"])
-
-        return enemies, wave, ap, exp
-
-    def POST__api_cleaning_end(self, end_wave):
-        payload = {
-            "remainTime": 0,
-            "currentWave": end_wave,
-            "getAp": 0,
-            "getExp": 0,
-            "getEnemyDown": 0
-        }
-        self._post("/api/cleaning/end", payload)
-
-    def POST__api_cleaning_retire(self):
-        payload = {}
-        self._post("/api/cleaning/retire", payload)
-
-class Purification():
-    def __init__(self):
-        self.api = API()
-
-    def run(self):
-        self.api.POST__api_cleaning_check()
-        remaining = 29
-        enemies, wave, ap, exp = self.api.POST__api_cleaning_start(2)
-        while remaining >= 0:
-            enemies, wave, ap, exp = self.api.POST__api_cleaning_end_wave(remaining, wave, ap, exp, enemies)
-            population = [1, 2]
-            weight = [0.3, 0.7]
-            rn = random.choices(population, weight)[0]
-            remaining -= rn
-            time.sleep(rn)
-        self.api.POST__api_cleaning_end(wave)
-
-#Purification().run()
