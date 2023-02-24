@@ -1,6 +1,6 @@
 #from dataclasses import dataclass
 #from api.Constants.Secrets import APP_VERSION
-from config import APP_VERSION
+from .Config import APP_VERSION
 #@dataclass(unsafe_hash=True)
 class DeviceInfo:
     deviceModel: str = "Samsung Galaxy Note10"

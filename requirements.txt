@@ -1,3 +1,5 @@
 pycryptodome
 msgpack
 python-dotenv
+aiohttp
+asyncio

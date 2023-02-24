@@ -3,9 +3,11 @@ from Crypto.Cipher import AES
 from Crypto.Signature import pkcs1_15
 from Crypto.Hash import SHA1
 from Crypto.PublicKey import RSA
-from Config import APP_VERSION, UUID_PAYMENT, USER_ID, PRIV_KEY, AES_KEY, X_UID
+import asyncio
+import aiohttp
+from constants.Config import APP_VERSION, UUID_PAYMENT, USER_ID, PRIV_KEY, AES_KEY, X_UID
 import msgpack, base64, datetime, random, logging, requests, time, urllib3
-from DeviceInformation import DeviceInfo
+from constants.DeviceInformation import DeviceInfo
 
 class BasicCrypto():
     def __init__(self):
@@ -53,6 +55,8 @@ class BaseAPI():
 
         response = self._post("/api/login", inner_payload, remove_header={'Cookie'})
         self.session_id = response["payload"]["sessionId"]
+
+        print(self.session_id)
 
     def get_action_time(self, old_action_time=0):
         action_times = [0xfd2c030, 0x18c120b0, 0xdd98840, 0x13ee8a0, 0x1a26560, 0x21526d10, 0xe100190, 0xfbf3830]  # Todo how are those generated
@@ -144,6 +148,32 @@ class BaseAPI():
                     logging.critical(f"Maximum attempts for {resource} aborting")
                     exit(-1)
         return resulting_response
+
+    async def _main(self, resource, payloads):
+        async with aiohttp.ClientSession(BaseAPI.URL) as session:
+            ret = await asyncio.gather(*[self._async_post(resource, payload, session) for payload in payloads])
+        print("Finalized all. Return is a list of len {} outputs.".format(len(ret)))
+
+        return ret
+
+    async def _async_post(self, resource, payload, session):
+        processed_payload = self._prepare_request("POST", resource, payload)
+
+        try:
+            async with session.post(resource, data=processed_payload) as response:
+                data = await response.read()
+
+                decrypted_data = self.crypto._decrypt_response(data)
+
+                print(decrypted_data)
+                
+                return decrypted_data
+        except Exception as e:
+            print("Unable to get endpoint {}. Error: {}.".format(resource, str(e)))
+
+    def parallel_post(self, resource, payloads: list = None) -> dict:
+         results = asyncio.run(self._main(resource, payloads))
+         return results
 
 class ExcessTrafficException(Exception):
     pass
