@@ -41,11 +41,12 @@ class BaseAPI():
         self.priv_key = PRIV_KEY
         self.user_id = USER_ID
         self.session_id = ''
+        self.headers = {}
 
         self.device_info = DeviceInfo()
 
-        self.request_session = requests.session()
-        self.request_session.verify = False
+        # self.request_session = requests.session()
+        # self.request_session.verify = False
         urllib3.disable_warnings()
 
     def _login_account(self):
@@ -53,10 +54,8 @@ class BaseAPI():
         inner_payload["uuid"] = self.uuid_payment
         inner_payload["xuid"] = self.x_uid_payment
 
-        response = self._post("/api/login", inner_payload, remove_header={'Cookie'})
+        response = self.post("/api/login", inner_payload, remove_header={'Cookie'})
         self.session_id = response["payload"]["sessionId"]
-
-        print(self.session_id)
 
     def get_action_time(self, old_action_time=0):
         action_times = [0xfd2c030, 0x18c120b0, 0xdd98840, 0x13ee8a0, 0x1a26560, 0x21526d10, 0xe100190, 0xfbf3830]  # Todo how are those generated
@@ -127,40 +126,35 @@ class BaseAPI():
         for header in remove_header:
             common_headers.pop(header)
 
-        self.request_session.headers = common_headers
+        self.headers = common_headers
         return payload
 
-    def _post(self, resource, payload: dict = None, remove_header=None) -> dict:
-        url = BaseAPI.URL + resource
-
-        payload = self._prepare_request("POST", resource, payload, remove_header=remove_header)
-
-        resulting_response = None
-        timeout_duration = 10 # todo exponential backoff
-        while resulting_response is None:
-            response = self.request_session.post(url, payload)
-            try:
-                resulting_response = self._handle_response(response)
-            except ExcessTrafficException as e:
-                time.sleep(timeout_duration)
-                timeout_duration += 5
-                if timeout_duration > 300:
-                    logging.critical(f"Maximum attempts for {resource} aborting")
-                    exit(-1)
+    def post(self, resource, payload: dict = None, remove_header=None) -> dict:
+        resulting_response = asyncio.run(self._single_main(resource, payload))
         return resulting_response
 
-    async def _main(self, resource, payloads):
+    async def _single_main(self, resource, payload):
+        async with aiohttp.ClientSession(BaseAPI.URL) as session:
+            ret = await asyncio.gather(self._async_post(resource, payload, session))
+        
+        # We know it returns an array of size 1
+        return ret[0]
+
+    async def _parallel_main(self, resource, payloads):
         async with aiohttp.ClientSession(BaseAPI.URL) as session:
             ret = await asyncio.gather(*[self._async_post(resource, payload, session) for payload in payloads])
-        print("Finalized all. Return is a list of len {} outputs.".format(len(ret)))
+
+            print("Finalized all. Return is a list of len {} outputs.".format(len(ret)))
 
         return ret
 
     async def _async_post(self, resource, payload, session):
+        timeout_duration = 10
         processed_payload = self._prepare_request("POST", resource, payload)
 
         try:
-            async with session.post(resource, data=processed_payload) as response:
+            async with session.post(resource, data=processed_payload, headers=self.headers) as response:
+
                 data = await response.read()
 
                 decrypted_data = self.crypto._decrypt_response(data)
@@ -168,12 +162,18 @@ class BaseAPI():
                 print(decrypted_data)
                 
                 return decrypted_data
+
+        except ExcessTrafficException as e:
+            time.sleep(timeout_duration)
+            timeout_duration += 5
+            if timeout_duration > 300:
+                logging.critical(f"Maximum attempts for {resource} aborting")
         except Exception as e:
             print("Unable to get endpoint {}. Error: {}.".format(resource, str(e)))
 
     def parallel_post(self, resource, payloads: list = None) -> dict:
-         results = asyncio.run(self._main(resource, payloads))
-         return results
+        results = asyncio.run(self._parallel_main(resource, payloads))
+        return results
 
 class ExcessTrafficException(Exception):
     pass
