@@ -42,11 +42,8 @@ class BaseAPI():
         self.user_id = USER_ID
         self.session_id = ''
         self.headers = {}
-
         self.device_info = DeviceInfo()
 
-        # self.request_session = requests.session()
-        # self.request_session.verify = False
         urllib3.disable_warnings()
 
     def _login_account(self):
