@@ -52,7 +52,6 @@ class BaseAPI():
         inner_payload["xuid"] = self.x_uid_payment
 
         response = asyncio.run(self._single_main("/api/login", inner_payload, remove_header=["Cookie"]))
-        #response = self.post("/api/login", inner_payload, remove_header={'Cookie'})
         self.session_id = response["payload"]["sessionId"]
 
     def get_action_time(self, old_action_time=0):
@@ -129,18 +128,24 @@ class BaseAPI():
 
     def post(self, resource, payload: dict = None, remove_header=None) -> dict:
         self._login_account()
-        resulting_response = asyncio.run(self._single_main(resource, payload, remove_header))
+        resulting_response = asyncio.run(self._single_main(resource, payload, remove_header=remove_header))
         return resulting_response
 
-    async def _single_main(self, resource, payload, remove_header=None):
-        async with aiohttp.ClientSession(BaseAPI.URL) as session:
+    async def _single_main(self, resource, payload, session=None, remove_header=None):
+        if session == None:
+            async with aiohttp.ClientSession(BaseAPI.URL) as session:
+                ret = await asyncio.gather(self._async_post(resource, payload, session, remove_header))
+        else:
             ret = await asyncio.gather(self._async_post(resource, payload, session, remove_header))
         
         # We know it returns an array of size 1
         return ret[0]
 
-    async def _parallel_main(self, resource, payloads, remove_header=None):
-        async with aiohttp.ClientSession(BaseAPI.URL) as session:
+    async def _parallel_main(self, resource, payloads, session = None, remove_header=None):
+        if session == None:
+            async with aiohttp.ClientSession(BaseAPI.URL) as session:
+                ret = await asyncio.gather(*[self._async_post(resource, payload, session, remove_header) for payload in payloads])
+        else:
             ret = await asyncio.gather(*[self._async_post(resource, payload, session, remove_header) for payload in payloads])
         return ret
 
@@ -169,7 +174,7 @@ class BaseAPI():
 
     def parallel_post(self, resource, payloads: list = None, remove_header=None) -> dict:
         self._login_account()
-        results = asyncio.run(self._parallel_main(resource, payloads))
+        results = asyncio.run(self._parallel_main(resource, payloads, remove_header=remove_header))
         return results
 
 class ExcessTrafficException(Exception):
