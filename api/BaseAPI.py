@@ -145,33 +145,30 @@ class BaseAPI():
     async def _parallel_main(self, resource, payloads, remove_header=None):
         async with aiohttp.ClientSession(BaseAPI.URL) as session:
             ret = await asyncio.gather(*[self._async_post(resource, payload, session, remove_header) for payload in payloads])
-
-            print("Finalized all. Return is a list of len {} outputs.".format(len(ret)))
-
         return ret
 
     async def _async_post(self, resource, payload, session, remove_header=None):
         timeout_duration = 10
         processed_payload = self._prepare_request("POST", resource, payload, remove_header=None)
+        decrypted_data = None
 
-        try:
-            async with session.post(resource, data=processed_payload, headers=self.headers) as response:
+        while decrypted_data is None:
+            try:
+                async with session.post(resource, data=processed_payload, headers=self.headers) as response:
+                    data = await response.read()
 
-                data = await response.read()
-
-                decrypted_data = self.crypto._decrypt_response(data)
-
-                print(decrypted_data)
+                    decrypted_data = self.crypto._decrypt_response(data)
                 
-                return decrypted_data
+            except ExcessTrafficException as e:
+                time.sleep(timeout_duration)
+                timeout_duration += 5
+                if timeout_duration > 30:
+                    logging.critical(f"Maximum attempts for {resource} aborting")
+                    # Re-throw exception
+                    raise
 
-        except ExcessTrafficException as e:
-            time.sleep(timeout_duration)
-            timeout_duration += 5
-            if timeout_duration > 300:
-                logging.critical(f"Maximum attempts for {resource} aborting")
-        except Exception as e:
-            print("Unable to get endpoint {}. Error: {}.".format(resource, str(e)))
+        return decrypted_data
+
 
     def parallel_post(self, resource, payloads: list = None, remove_header=None) -> dict:
         self._login_account()
