@@ -3,3 +3,4 @@ msgpack
 python-dotenv
 aiohttp
 asyncio
+beautifulsoup4
