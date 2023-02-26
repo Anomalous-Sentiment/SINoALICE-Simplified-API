@@ -109,17 +109,11 @@ class GranColoAPI(BaseAPI):
             # Returns a list of list of guilds
             all_ts_top_50 = await asyncio.gather(*[self._get_top_50_guilds(ts, session) for ts in gc_time_slots])
 
-            print(len(all_ts_top_50))
-
-            for t_list in all_ts_top_50:
-                print(len(t_list))
-
             # Get the remainder of the ranking list for each ts
             fulls_ts_list = await asyncio.gather(*[self._get_full_ts_ranks(ts, top_50, session) for ts, top_50 in zip(gc_time_slots, all_ts_top_50)])
 
             # Join the lists of each ts together into final list
             for ts_list in fulls_ts_list:
-                print(len(ts_list))
                 final_list.extend(ts_list)
 
         return final_list
