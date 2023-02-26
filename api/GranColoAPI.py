@@ -50,7 +50,7 @@ class GranColoAPI(BaseAPI):
         # Expected to return 50 guilds
         response = await self._async_post(GranColoAPI.GC_ENDPOINT, init_payload, session=session)
 
-        print(response)
+
         top_50_list = response['payload']['gvgEventRankingDataList']
 
         return top_50_list
@@ -63,7 +63,6 @@ class GranColoAPI(BaseAPI):
             'pageNo': 0
         }
 
-        print(last_guild_id)
 
         response = await self._async_post(GranColoAPI.GC_ENDPOINT, rev_rank_payload, session=session)
 
@@ -75,15 +74,14 @@ class GranColoAPI(BaseAPI):
         # we may have hit the end of the list.
         # Find the index of the last guild Id if not at expected location
         while temp_21_list[new_index]['guildDataId'] != last_guild_id:
-            print('Not at expected location, incrementing...')
             new_index = new_index + 1
 
 
         # Return the list of guilds that come after last_guild_id. Usually 10, but will be less than 10 if there are less than 10 guilds before end the of ranking list
         return temp_21_list[new_index + 1::]
 
-    async def _get_remainder_ts_ranks(self, ts, top_50_list, session):
-        ts_guild_list = []
+    async def _get_full_ts_ranks(self, ts, top_50_list, session):
+        ts_guild_list = top_50_list
         
         # Get the next 10 guilds using last guild Id
         next_10_guilds = await self._get_next_10_guilds(ts, top_50_list[-1]['guildDataId'], session=session)
@@ -111,11 +109,17 @@ class GranColoAPI(BaseAPI):
             # Returns a list of list of guilds
             all_ts_top_50 = await asyncio.gather(*[self._get_top_50_guilds(ts, session) for ts in gc_time_slots])
 
+            print(len(all_ts_top_50))
+
+            for t_list in all_ts_top_50:
+                print(len(t_list))
+
             # Get the remainder of the ranking list for each ts
-            fulls_ts_list = await asyncio.gather(*[self._get_remainder_ts_ranks(ts, top_50, session) for ts, top_50 in zip(gc_time_slots, all_ts_top_50)])
+            fulls_ts_list = await asyncio.gather(*[self._get_full_ts_ranks(ts, top_50, session) for ts, top_50 in zip(gc_time_slots, all_ts_top_50)])
 
             # Join the lists of each ts together into final list
             for ts_list in fulls_ts_list:
+                print(len(ts_list))
                 final_list.extend(ts_list)
 
         return final_list
