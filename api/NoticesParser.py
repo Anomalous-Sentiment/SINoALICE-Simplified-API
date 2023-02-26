@@ -11,10 +11,25 @@ class NoticesParser():
         pass
 
     def get_gc_dates(self):
+        # Get the page html, and parse as soup
+        notices_page_soup = BeautifulSoup(request.urlopen(BASE_URL + NOTICES_ENDPOINT).read(), 'html.parser')
+
+        # Get the href of the element which links to the Gran Colo notice page
+        colo_page = self._get_href_with_str(notices_page_soup)
+
         pass
 
-    def _get_href_with_str(self):
-        pass
+    def _get_href_with_str(self, soup):
+        # Find the string that contains "Colosseum Event: Gran Colosseum Notice"
+        colo_string = soup.find(string=re.compile('Colosseum Event: Gran Colosseum Notice'))
+
+        # Find the parent <a> element of the string
+        a_tag = res.find_parent('a')
+
+        # Get the <a> element href
+        href = a_tag['href']
+
+        return href
 
     def _get_prelim_dates(self):
         pass
