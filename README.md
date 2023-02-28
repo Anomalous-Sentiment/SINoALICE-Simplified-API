@@ -40,7 +40,7 @@ Again, this is all based on my own experiences as a first timer trying to revers
 ## Usage
 
 - Using the `example.env` file as reference, create a `.env` file containing the values reverse engineered above.
-- Note: This will cause the account associated with the UID to be used in the API requests. It is suggested to use a "dummy" account.
+  - Note: This will cause the account associated with the UID to be used in the API requests. It is suggested to use a "dummy" account.
 - Install the required modules lsited in the `requirements.txt` file
 - Import and use the API classes
 
