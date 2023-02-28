@@ -11,7 +11,7 @@ This repository contains a set of classes which are used to interact the the SIN
 There are a few prerequisites that need to be met before using these functions.
 
 - An existing account in SINoALICE
-- Reverse engineered values for the the following:
+- Reverse engineered values for the following:
   - AES key
   - UID
   - UUID
