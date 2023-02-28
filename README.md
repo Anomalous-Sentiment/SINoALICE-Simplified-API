@@ -32,16 +32,16 @@ Android app reverse engineering guides shouldn't be particularly hard to find or
 - SINoALICE is a IL2CPP app. Keep that in mind when reverse engineering.
 - You'll likely need a rooted android device to use Frida to hook into function calls
   - Modifying the apk and injecting frida-gadget will not work from my own experience
-  - Using frida's command line arg realm=emulated will not work either
+  - Using frida's command line arg `realm=emulated` will not work either
 - For more information, refer to the linked repositories in the credits section of the README. Specifically the discussions in the closed issues, and their README files
 
 Again, this is all based on my own experiences as a first timer trying to reverse engineer an android app. In fact, calling this "reverse engineering" feels too grand for something like this. There are probably better ways to do this than what I've done here, but hey, if it works, it works.
 
 ## Usage
 
-- Using the example.env file as reference, create a .env file containing the values reverse engineered above.
+- Using the `example.env` file as reference, create a `.env` file containing the values reverse engineered above.
 - Note: This will cause the account associated with the UID to be used in the API requests. It is suggested to use a "dummy" account.
-- Install the required modules lsited in the requirements.txt file
+- Install the required modules lsited in the `requirements.txt` file
 - Import and use the API classes
 
 ## Examples
