@@ -2,7 +2,7 @@
 
 A simplified set of Python classes and functions for interacting with the SINoALICE web API.
 
-For those who are unaware, SINoALICE is a mobile game. A very niche game with a... dminishing player population. Well, you're probablt not here to read about this, so we'll leave it at that.
+For those who are unaware, SINoALICE is a mobile game. A very niche game with a... dminishing player population. Well, you're probably not here to read about this, so we'll leave it at that.
 
 This repository contains a set of classes which are used to interact the the SINoALICE web API, but is really just code which uses POSTs request to the server. You can already do this with existing repositories on github, but I figured it'd be nice to simplify their usage a bit, which is exactly what this is: A simplified version. Maybe save some time if someone ever decides to come along and do the same thing.
 
