@@ -50,10 +50,10 @@ TBC
 
 ## Credits
 
-Credit goes to [see-aestas](https://github.com/see-aestas/SINoALICE-API) and [Egoistically](https://github.com/Egoistically/SINoALICE) for laying the foundations and groundwork that made this possible, specifically the BaseAPI.py file, which is just modified from their work.
+Credit goes to [see-aestas](https://github.com/see-aestas/SINoALICE-API) and [Egoistically](https://github.com/Egoistically/SINoALICE) for laying the foundations and groundwork that made this possible, specifically the `BaseAPI.py` file, which is just modified from their work.
 
 ## Other Comments
 
-For anyone familiar with the SINoALICE, you may know about sites such as deachsword and the no longer unavailable kurelog, which were able to access SINoALICE GC data, as well as a significant amount of other player data. Having used these sites myself, I can confidantly say that my work here is nothing new. There are many who have been down this path before and have a far greater understanding of SINoALICe's API and structure, so I consider this a personal project to see whether I am able to follow in their footsteps.
+For anyone familiar with the SINoALICE, you may know about sites such as deachsword and the no longer unavailable kurelog, which were able to access SINoALICE GC data, as well as a significant amount of other player data. Having used these sites myself, I can confidently say that my work here is nothing new. There are many who have been down this path before and have a far greater understanding of SINoALICe's API and structure, so I consider this a personal project to see whether I am able to follow in their footsteps.
 
 And well, I was also interested in how it all worked anyway, so I figured I'd try at least.
