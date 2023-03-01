@@ -11,6 +11,7 @@ class GuildAPI(BaseAPI):
         BaseAPI.__init__(self)
 
     def get_guild_list(self):
+        self._login_account()
         # Call the main async function for getting all guilds and wait for completion
         full_guild_list = asyncio.run(self._get_guild_list_main())
         return full_guild_list
@@ -38,15 +39,46 @@ class GuildAPI(BaseAPI):
         return full_guild_list
 
     async def _get_rank_guilds(self, rank, session):
+        guild_rank_list = []
+
         # This function gets all guilds in a given rank
 
+        init_payload = {
+            'countryCode': -1, 
+            'mode': 0, 
+            'pageNo': 1, 
+            'rank': rank, 
+            'type': 0
+        }
+
+        payload_list = []
+
         # Make the initial request for the first page of guilds in the given rank
-        initial_page_res = self._single_main()
+        initial_page_res = await self._async_post(GuildAPI.GUILD_RANKS_ENDPOINT, init_payload, session)
 
         # Get the total number of pages from the response
+        total_pages = initial_page_res['payload']['maxPageNo']
 
-        # Send a request for every page asynchronously
+        guild_rank_list.extend(initial_page_res['payload']['guildRankingDataList'])
 
-        # Join all pages together for list of all guilds in the given rank
+        if (total_pages > 1):
+            # Create a list of payloads to get each page remaining
+            for page in range(2, total_pages + 1):
+                new_payload = {
+                    'countryCode': -1, 
+                    'mode': 0, 
+                    'pageNo': page, 
+                    'rank': rank, 
+                    'type': 0
+                }
 
-        pass
+                payload_list.append(new_payload)
+
+            # Send a request to retrieve every page asynchronously
+            remainder_pages_res_list = await asyncio.gather(*[self._async_post(GuildAPI.GUILD_RANKS_ENDPOINT, payload, session) for payload in payload_list])
+
+            # Join all pages together for list of all guilds in the given rank
+            for res in remainder_pages_res_list:
+                guild_rank_list.extend(res['payload']['guildRankingDataList'])
+
+        return guild_rank_list
