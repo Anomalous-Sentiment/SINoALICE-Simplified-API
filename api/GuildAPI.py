@@ -17,10 +17,25 @@ class GuildAPI(BaseAPI):
         return full_guild_list
 
     def get_members(self, guild_id):
-        pass
+        member_req_payload = {
+            'guildDataId': guild_id
+        }
+
+        res = self.post(GuildAPI.GUILD_MEMBERS_ENDPOINT, member_req_payload)
+        member_list = res['payload']['guildMemberList']
+
+        return member_list
 
     def get_guild_data(self, guild_id):
-        pass
+        guild_req_payload = {
+            'guildDataId': guild_id
+        }
+
+        res = self.post(GuildAPI.GUILD_MEMBERS_ENDPOINT, guild_req_payload)
+        guild_data = res['payload']
+
+        
+        return guild_data
 
     async def _get_guild_list_main(self):
         # Get the guild list for every rank (S, A, B, C, D)
