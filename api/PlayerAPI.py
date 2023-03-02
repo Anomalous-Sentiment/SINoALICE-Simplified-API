@@ -14,6 +14,10 @@ class PlayerAPI(GuildAPI):
         # This is a flawed approach as not all guilds are returned in the call, and not all players are in a guild
         # But this is the only approach I can think of for now aside from brute forcing it and trying every possible
         # User id
+        self._login_account()
+        if guild_list == None:
+            # If no guild list passed in, use GuildAPI functions to get a guild list
+            guild_list = asyncio.run(self._get_guild_list_main())
 
         player_list = asyncio.run(self._get_players_main(guild_list))
 
@@ -26,11 +30,6 @@ class PlayerAPI(GuildAPI):
         player_list = []
         member_req_payloads = []
         player_data_payloads = []
-
-        self._login_account()
-        if guild_list == None:
-            # If no guild list passed in, use GuildAPI functions to get a guild list
-            guild_list = asyncio.run(self._get_full_rank_list_main())
 
         # Create list of payloads for getting member lists of all guilds
         for guild in guild_list:
@@ -46,12 +45,17 @@ class PlayerAPI(GuildAPI):
 
             # Add the member list to the player list
             for res in member_res_list:
-                player_list.extend(members['payload']['guildMemberList'])
+                # Check if there is a payload
+                if 'payload' in res:
+                    player_list.extend(res['payload']['guildMemberList'])
+                else:
+                    # To implement error handling. Failed to get list for some reason
+                    print('Failed to get member list: ', str(res))
 
             # Create a list of payloads for getting player data of every player in list
             for player in player_list:
                 new_player_data_payload = {
-                    'targetUserId': player['userId']
+                    'targetUserId': player['guildUserData']['userId']
                 }
 
                 player_data_payloads.append(new_player_data_payload)
