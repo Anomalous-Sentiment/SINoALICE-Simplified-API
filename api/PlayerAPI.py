@@ -23,8 +23,14 @@ class PlayerAPI(GuildAPI):
 
         return player_list
 
-    async def get_player_data(self):
-        pass
+    async def get_player_data(self, user_id):
+        player_req_payload = {
+            'targetUserId': user_id
+        }
+
+        res = self.post(PlayerAPI.PLAYER_DATA_ENDPOINT, guild_req_payload)
+
+        return res['payload']
 
     async def _get_players_main(self, guild_list = None):
         player_list = []
