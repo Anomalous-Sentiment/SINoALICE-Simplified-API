@@ -30,6 +30,7 @@ class PlayerAPI(GuildAPI):
         player_list = []
         member_req_payloads = []
         player_data_payloads = []
+        player_data_res_list = []
 
         # Create list of payloads for getting member lists of all guilds
         for guild in guild_list:
@@ -60,8 +61,11 @@ class PlayerAPI(GuildAPI):
 
                 player_data_payloads.append(new_player_data_payload)
 
-            # For each member, call the API endpoint to get their player data
-            player_data_res_list = await asyncio.gather(*[self._async_post(PlayerAPI.PLAYER_DATA_ENDPOINT, payload, session) for payload in player_data_payloads])
+            # Split requests into chucks to avoid disconnect from server
+            for chunk in self._chunks(player_data_payloads, 800):
+                # For each member, call the API endpoint to get their player data
+                temp_list = await asyncio.gather(*[self._async_post(PlayerAPI.PLAYER_DATA_ENDPOINT, payload, session) for payload in chunk])
+                player_data_res_list.extend(temp_list)
 
             # Combine the data
             for guild_player_data, player_res_data in zip(player_list, player_data_res_list):
@@ -70,3 +74,8 @@ class PlayerAPI(GuildAPI):
 
         return player_list
 
+    # From stack overflow. 
+    def _chunks(self, lst, n):
+        """Yield successive n-sized chunks from lst."""
+        for i in range(0, len(lst), n):
+            yield lst[i:i + n]
