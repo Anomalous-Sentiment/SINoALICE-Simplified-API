@@ -31,7 +31,7 @@ class GuildAPI(BaseAPI):
             'guildDataId': guild_id
         }
 
-        res = self.post(GuildAPI.GUILD_MEMBERS_ENDPOINT, guild_req_payload)
+        res = self.post(GuildAPI.GUILD_DATA_ENDPOINT, guild_req_payload)
         guild_data = res['payload']
 
         
@@ -47,9 +47,12 @@ class GuildAPI(BaseAPI):
             # Call async function to get guilds in rank and wait for all to finish
             guild_rank_lists = await asyncio.gather(*[self._get_rank_guilds(rank, session) for rank in rank_list])
 
-        # Combine lists from every rank for full guild list
-        for guild_list in guild_rank_lists:
-            full_guild_list.extend(guild_list)
+            # Combine lists from every rank for full guild list
+            for guild_list in guild_rank_lists:
+                full_guild_list.extend(guild_list)
+
+            # Get more detailed info of guilds in list
+            full_guild_list = await self._get_full_guild_details(full_guild_list, session)
 
         return full_guild_list
 
@@ -97,3 +100,22 @@ class GuildAPI(BaseAPI):
                 guild_rank_list.extend(res['payload']['guildRankingDataList'])
 
         return guild_rank_list
+
+    async def _get_full_guild_details(self, guild_list, session):
+        payload_list = []
+
+        # Create list of payloads
+        for guild in guild_list:
+            guild_req_payload = {
+                'guildDataId': guild['guildDataId']
+            }
+            payload_list.append(guild_req_payload)
+
+        # Get full guild details of guild in guild list
+        res_list = await asyncio.gather(*[self._async_post(GuildAPI.GUILD_DATA_ENDPOINT, payload, session) for payload in payload_list])
+
+        # Merge guild data with list
+        for res, guild in zip(res_list, guild_list):
+            guild.update(res['payload']['guildData'])
+
+        return guild_list
