@@ -66,7 +66,7 @@ class GuildAPI(BaseAPI):
             'mode': 0, 
             'pageNo': 1, 
             'rank': rank, 
-            'type': 0
+            'type': 2
         }
 
         payload_list = []
@@ -87,7 +87,7 @@ class GuildAPI(BaseAPI):
                     'mode': 0, 
                     'pageNo': page, 
                     'rank': rank, 
-                    'type': 0
+                    'type': 2
                 }
 
                 payload_list.append(new_payload)
