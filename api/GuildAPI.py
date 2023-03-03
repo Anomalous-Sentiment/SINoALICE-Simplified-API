@@ -51,7 +51,6 @@ class GuildAPI(BaseAPI):
             for guild_list in guild_rank_lists:
                 full_guild_list.extend(guild_list)
 
-            # Get more detailed info of guilds in list
             full_guild_list = await self._get_full_guild_details(full_guild_list, session)
 
         return full_guild_list
@@ -98,7 +97,7 @@ class GuildAPI(BaseAPI):
             # Join all pages together for list of all guilds in the given rank
             for res in remainder_pages_res_list:
                 guild_rank_list.extend(res['payload']['guildRankingDataList'])
-
+        
         return guild_rank_list
 
     async def _get_full_guild_details(self, guild_list, session):
@@ -116,6 +115,12 @@ class GuildAPI(BaseAPI):
 
         # Merge guild data with list
         for res, guild in zip(res_list, guild_list):
-            guild.update(res['payload']['guildData'])
+            # Check for errors
+            if 'errors' in res:
+                # Maybe do error handling. Just print for now
+                print(guild)
+                print(res)
+            else:
+                guild.update(res['payload']['guildData'])
 
         return guild_list
