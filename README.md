@@ -50,7 +50,7 @@ TBC
 
 ## Credits
 
-Credit goes to [see-aestas](https://github.com/see-aestas/SINoALICE-API) and [Egoistically](https://github.com/Egoistically/SINoALICE) for laying the foundations and groundwork that made this possible, specifically the `BaseAPI.py` file, which is just modified from their work.
+Credit goes to [see-aestas](https://github.com/see-aestas/SINoALICE-API) and [Egoistically](https://github.com/Egoistically/SINoALICE) for laying the foundations and groundwork that made this possible, specifically the `BaseAPI.py` and `DeviceInformation.py` file which are just re-used/modified from their work.
 
 ## Other Comments
 
