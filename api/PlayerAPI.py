@@ -68,7 +68,7 @@ class PlayerAPI(GuildAPI):
                 player_data_payloads.append(new_player_data_payload)
 
             # Split requests into chucks to avoid disconnect from server
-            for chunk in self._chunks(player_data_payloads, 2000):
+            for chunk in self._chunks(player_data_payloads, 1000):
                 # For each member, call the API endpoint to get their player data
                 temp_list = await asyncio.gather(*[self._async_post(PlayerAPI.PLAYER_DATA_ENDPOINT, payload, session) for payload in chunk])
                 player_data_res_list.extend(temp_list)

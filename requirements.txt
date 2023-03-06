@@ -4,3 +4,4 @@ python-dotenv
 aiohttp
 asyncio
 beautifulsoup4
+SQLAlchemy
