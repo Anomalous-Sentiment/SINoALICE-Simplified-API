@@ -1,4 +1,4 @@
-from BaseAPI import BaseAPI
+from .BaseAPI import BaseAPI
 import asyncio
 import aiohttp
 

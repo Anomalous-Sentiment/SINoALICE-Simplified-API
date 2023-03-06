@@ -5,9 +5,9 @@ from Crypto.Hash import SHA1
 from Crypto.PublicKey import RSA
 import asyncio
 import aiohttp
-from constants.Config import APP_VERSION, UUID_PAYMENT, USER_ID, PRIV_KEY, AES_KEY, X_UID
+from .constants.Config import APP_VERSION, UUID_PAYMENT, USER_ID, PRIV_KEY, AES_KEY, X_UID
 import msgpack, base64, datetime, random, logging, requests, time, urllib3
-from constants.DeviceInformation import DeviceInfo
+from .constants.DeviceInformation import DeviceInfo
 
 class BasicCrypto():
     def __init__(self):

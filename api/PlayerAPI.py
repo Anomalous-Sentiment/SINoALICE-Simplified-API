@@ -1,5 +1,5 @@
-from BaseAPI import BaseAPI
-from GuildAPI import GuildAPI
+from .BaseAPI import BaseAPI
+from .GuildAPI import GuildAPI
 import asyncio
 import aiohttp
 
