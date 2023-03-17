@@ -3,7 +3,7 @@ import os
 
 load_dotenv()
 
-APP_VERSION = '42.1.0' # app version
+APP_VERSION = '43.0.1' # app version
 
 UUID_PAYMENT = os.getenv('UUID_PAYMENT')
 AES_KEY = bytes(os.getenv('AES_KEY'), 'utf-8')
