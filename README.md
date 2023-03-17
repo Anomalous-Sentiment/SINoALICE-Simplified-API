@@ -11,6 +11,9 @@ This repository contains a set of classes which are used to interact the the SIN
 There are a few prerequisites that need to be met before using these functions.
 
 - An existing account in SINoALICE
+- Current app version number
+  - Easy to find. Just go to the app store and see what version the app is up to. You will place this in the `.env` file later on.
+  - Using an unsupported app version number will cause an error in the `BaseAPI.py` file when logging in. In other words, when you call any function (As all functions begin with logging in for a session ID).
 - Reverse engineered values for the following:
   - AES key
   - UID
