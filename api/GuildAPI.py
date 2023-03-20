@@ -102,6 +102,7 @@ class GuildAPI(BaseAPI):
 
     async def _get_full_guild_details(self, guild_list, session):
         payload_list = []
+        res_list = []
 
         # Create list of payloads
         for guild in guild_list:
@@ -110,8 +111,10 @@ class GuildAPI(BaseAPI):
             }
             payload_list.append(guild_req_payload)
 
-        # Get full guild details of guild in guild list
-        res_list = await asyncio.gather(*[self._async_post(GuildAPI.GUILD_DATA_ENDPOINT, payload, session) for payload in payload_list])
+        for chunk in self._chunks(payload_list, 1000):
+            # Get full guild details of guild in guild list
+            temp_list = await asyncio.gather(*[self._async_post(GuildAPI.GUILD_DATA_ENDPOINT, payload, session) for payload in chunk])
+            res_list.extend(temp_list)
 
         # Merge guild data with list
         for res, guild in zip(res_list, guild_list):
@@ -124,3 +127,9 @@ class GuildAPI(BaseAPI):
                 guild.update(res['payload']['guildData'])
 
         return guild_list
+
+     # From stack overflow. 
+    def _chunks(self, lst, n):
+        """Yield successive n-sized chunks from lst."""
+        for i in range(0, len(lst), n):
+            yield lst[i:i + n] #
