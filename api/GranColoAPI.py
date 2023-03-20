@@ -9,26 +9,9 @@ class GranColoAPI(BaseAPI):
         BaseAPI.__init__(self)
 
     def get_ts_rank_list(self, ts):
-        # Get the top 50 guilds
-        ts_guild_list = self._get_top_50_guilds(ts)
-
-        # Get the next 10 guilds using last guild Id
-        next_10_guilds = self._get_next_10_guilds(ts, ts_guild_list[-1]['guildDataId'])
-
-        # Add the guilds to the ts list
-        ts_guild_list.extend(next_10_guilds)
-
-        # Iterate until less than 10 guilds returned. If less than 10 guilds, then that is the end of the list
-        while len(next_10_guilds) >= 10:
-
-            #Get the next 10 guilds again
-            next_10_guilds = self._get_next_10_guilds(ts, ts_guild_list[-1]['guildDataId'])
-
-            # Add the guilds to the ts list
-            ts_guild_list.extend(next_10_guilds)
-
-        # Return the final list
-        return ts_guild_list
+        self._login_account()
+        ts_list = asyncio.run(self._get_ts_rank_list_main())
+        return ts_list
 
     def get_full_rank_list(self):
         self._login_account()
@@ -117,3 +100,13 @@ class GranColoAPI(BaseAPI):
                 final_list.extend(ts_list)
 
         return final_list
+
+    async def _get_ts_rank_list_main(self):
+        async with aiohttp.ClientSession(BaseAPI.URL) as session:
+            # Returns a list of list of guilds
+            ts_top_50 = await self._get_top_50_guilds(ts, session)
+
+            # Get the remainder of the ranking list for each ts
+            full_ts_list = await self._get_full_ts_ranks(ts, top_50, session)
+
+        return full_ts_list
