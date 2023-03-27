@@ -10,10 +10,10 @@ class GuildAPI(BaseAPI):
     def __init__(self):
         BaseAPI.__init__(self)
 
-    def get_guild_list(self):
+    def get_guild_list(self, base_guild_list=[]):
         self._login_account()
         # Call the main async function for getting all guilds and wait for completion
-        full_guild_list = asyncio.run(self._get_guild_list_main())
+        full_guild_list = asyncio.run(self._get_guild_list_main(base_guild_list))
         return full_guild_list
 
     def get_members(self, guild_id):
@@ -37,11 +37,10 @@ class GuildAPI(BaseAPI):
         
         return guild_data
 
-    async def _get_guild_list_main(self):
+    async def _get_guild_list_main(self, full_guild_list=[]):
         # Get the guild list for every rank (S, A, B, C, D)
         # Guild ranks are represented as number in requests. (D = 0, C = 1, B = 2, A = 3, S = 4)
         rank_list = [0, 1, 2, 3, 4]
-        full_guild_list = []
 
         async with aiohttp.ClientSession(BaseAPI.URL) as session:
             # Call async function to get guilds in rank and wait for all to finish
@@ -51,7 +50,14 @@ class GuildAPI(BaseAPI):
             for guild_list in guild_rank_lists:
                 full_guild_list.extend(guild_list)
 
-            full_guild_list = await self._get_full_guild_details(full_guild_list, session)
+            # convert to set to remove dupicate guildDataIds
+            guild_set = set()
+
+            for guild in full_guild_list:
+                # Add as dict
+                guild_set.add(guild['guildDataId'])
+
+            full_guild_list = await self._get_full_guild_details(guild_set, session)
 
         return full_guild_list
 
@@ -100,14 +106,14 @@ class GuildAPI(BaseAPI):
         
         return guild_rank_list
 
-    async def _get_full_guild_details(self, guild_list, session):
+    async def _get_full_guild_details(self, guild_id_set, session):
         payload_list = []
         res_list = []
 
         # Create list of payloads
-        for guild in guild_list:
+        for guild_id in guild_id_set:
             guild_req_payload = {
-                'guildDataId': guild['guildDataId']
+                'guildDataId': guild_id
             }
             payload_list.append(guild_req_payload)
 
@@ -116,17 +122,18 @@ class GuildAPI(BaseAPI):
             temp_list = await asyncio.gather(*[self._async_post(GuildAPI.GUILD_DATA_ENDPOINT, payload, session) for payload in chunk])
             res_list.extend(temp_list)
 
-        # Merge guild data with list
-        for res, guild in zip(res_list, guild_list):
+        final_guild_data_list = []
+        # Extract guild data from rseponses and append to list if not errors
+        for res, guild_id in zip(res_list, guild_id_set):
             # Check for errors
             if 'errors' in res:
                 # Maybe do error handling. Just print for now
-                print(guild)
+                print('Error getting guild: ' + str(guild_id))
                 print(res)
             else:
-                guild.update(res['payload']['guildData'])
+                final_guild_data_list.append(res['payload']['guildData'])
 
-        return guild_list
+        return final_guild_data_list
 
      # From stack overflow. 
     def _chunks(self, lst, n):
