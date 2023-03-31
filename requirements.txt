@@ -5,3 +5,4 @@ aiohttp
 asyncio
 beautifulsoup4
 google-play-scraper
+urllib3
