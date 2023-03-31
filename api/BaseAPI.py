@@ -8,6 +8,7 @@ import aiohttp
 from .constants.Config import APP_VERSION, UUID_PAYMENT, USER_ID, PRIV_KEY, AES_KEY, X_UID
 import msgpack, base64, datetime, random, logging, requests, time, urllib3
 from .constants.DeviceInformation import DeviceInfo
+from google_play_scraper import app
 
 class BasicCrypto():
     def __init__(self):
@@ -44,9 +45,26 @@ class BaseAPI():
         self.headers = {}
         self.device_info = DeviceInfo()
 
+        # Set the initial app version
+        self.app_version = APP_VERSION
+
         urllib3.disable_warnings()
 
     def _login_account(self):
+        try:
+            # Get the sinoalice app store data on google store
+            sino_app_data = app(
+                'com.nexon.sinoalice',
+                lang='en', # defaults to 'en'
+                country='us' # defaults to 'us'
+            )
+            # Set the new app version number
+            self.app_version = sino_app_data['version']
+        except Exception as Argument:
+            # Failed to get latest app version string
+            print('Error getting latest app version')
+
+
         inner_payload = self.device_info.get_device_info_dict()
         inner_payload["uuid"] = self.uuid_payment
         inner_payload["xuid"] = self.x_uid_payment
@@ -110,7 +128,7 @@ class BaseAPI():
 
         common_headers = {
             "Expect": "100-continue",
-            "User-Agent": f"UnityRequest com.nexon.sinoalice {APP_VERSION} (Samsung Galaxy Note10)"
+            "User-Agent": f"UnityRequest com.nexon.sinoalice {self.app_version} (Samsung Galaxy Note10)"
                           f" Android OS 10 / API-29)",
             "X-post-signature": f"{mac}",
             "X-Unity-Version": "2018.4.19f1",
