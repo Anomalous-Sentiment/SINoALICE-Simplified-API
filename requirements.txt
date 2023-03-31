@@ -6,3 +6,4 @@ asyncio
 beautifulsoup4
 SQLAlchemy
 apscheduler
+google-play-scraper
