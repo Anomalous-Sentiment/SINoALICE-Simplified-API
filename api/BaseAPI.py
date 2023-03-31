@@ -6,7 +6,7 @@ from Crypto.PublicKey import RSA
 import asyncio
 import aiohttp
 from .constants.Config import APP_VERSION, UUID_PAYMENT, USER_ID, PRIV_KEY, AES_KEY, X_UID
-import msgpack, base64, datetime, random, logging, requests, time, urllib3
+import msgpack, base64, datetime, random, logging, time, urllib3
 from .constants.DeviceInformation import DeviceInfo
 from google_play_scraper import app
 
