@@ -1,4 +1,4 @@
-from .BaseAPI import BaseAPI
+
 from .GuildAPI import GuildAPI
 import asyncio
 import aiohttp
@@ -48,7 +48,7 @@ class PlayerAPI(GuildAPI):
 
             member_req_payloads.append(new_member_payload)
 
-        async with aiohttp.ClientSession(BaseAPI.URL) as session:
+        async with aiohttp.ClientSession(GuildAPI.URL) as session:
             # For every guild in list, get the member list asynchronously
             member_res_list = await asyncio.gather(*[self._async_post(GuildAPI.GUILD_MEMBERS_ENDPOINT, payload, session) for payload in member_req_payloads])
 
@@ -81,7 +81,7 @@ class PlayerAPI(GuildAPI):
 
             player_data_payloads.append(new_player_data_payload)
 
-        async with aiohttp.ClientSession(BaseAPI.URL) as session:
+        async with aiohttp.ClientSession(GuildAPI.URL) as session:
             # Split requests into chucks to avoid disconnect from server
             for chunk in self._chunks(player_data_payloads, 1000):
                 # For each member, call the API endpoint to get their player data
