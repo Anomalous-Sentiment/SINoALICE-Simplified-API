@@ -117,7 +117,7 @@ class GuildAPI(BaseAPI):
             }
             payload_list.append(guild_req_payload)
 
-        for chunk in self._chunks(payload_list, 1000):
+        for chunk in self._chunks(payload_list, 500):
             # Get full guild details of guild in guild list
             temp_list = await asyncio.gather(*[self._async_post(GuildAPI.GUILD_DATA_ENDPOINT, payload, session) for payload in chunk])
             res_list.extend(temp_list)

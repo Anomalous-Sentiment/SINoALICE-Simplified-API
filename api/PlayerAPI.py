@@ -63,12 +63,6 @@ class PlayerAPI(GuildAPI):
 
         return player_list
 
-    # From stack overflow. 
-    def _chunks(self, lst, n):
-        """Yield successive n-sized chunks from lst."""
-        for i in range(0, len(lst), n):
-            yield lst[i:i + n]
-
     async def _get_basic_player_info_main(self, player_id_list):
         player_data_res_payload_list = []
         player_data_payloads = []
@@ -83,7 +77,7 @@ class PlayerAPI(GuildAPI):
 
         async with aiohttp.ClientSession(GuildAPI.URL) as session:
             # Split requests into chucks to avoid disconnect from server
-            for chunk in self._chunks(player_data_payloads, 1000):
+            for chunk in self._chunks(player_data_payloads, 500):
                 # For each member, call the API endpoint to get their player data
                 temp_list = await asyncio.gather(*[self._async_post(PlayerAPI.PLAYER_DATA_ENDPOINT, payload, session) for payload in chunk])
 
