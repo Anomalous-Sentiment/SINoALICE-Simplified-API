@@ -66,6 +66,10 @@ class BaseAPI():
 
 
         inner_payload = self.device_info.get_device_info_dict()
+        
+        # Overwrite the version from the device version dict
+        inner_payload['appVersion'] = self.app_version
+        
         inner_payload["uuid"] = self.uuid_payment
         inner_payload["xuid"] = self.x_uid_payment
 
