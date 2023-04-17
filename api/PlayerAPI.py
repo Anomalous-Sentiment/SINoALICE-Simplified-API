@@ -88,7 +88,11 @@ class PlayerAPI(GuildAPI):
 
                 # Add the payloads of each res body to the list
                 for res in temp_list:
-                    player_data_res_payload_list.append(res['payload'])
+                    if 'payload' in res:
+                        player_data_res_payload_list.append(res['payload'])
+                    else:
+                        # Error with request
+                        print(res)
 
         return player_data_res_payload_list
 
