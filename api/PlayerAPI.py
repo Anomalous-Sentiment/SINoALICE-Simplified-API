@@ -10,6 +10,11 @@ class PlayerAPI(GuildAPI):
     def __init__(self):
         GuildAPI.__init__(self)
 
+    def get_selected_player_data(self, player_id_list):
+        player_list = asyncio.run(self._get_basic_player_info_main(player_id_list))
+        return player_list
+
+
     def get_players_in_guilds(self, guild_list = None):
         # This function currently depends on using the guild list to retrieve a list of players
         # This is a flawed approach as not all guilds are returned in the call, and not all players are in a guild
