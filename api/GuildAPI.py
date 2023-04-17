@@ -12,8 +12,9 @@ class GuildAPI(BaseAPI):
 
     def get_guild_list(self, base_guild_list=[]):
         self._login_account()
+        base_list_copy = base_guild_list[:]
         # Call the main async function for getting all guilds and wait for completion
-        full_guild_list = asyncio.run(self._get_guild_list_main(base_guild_list))
+        full_guild_list = asyncio.run(self._get_guild_list_main(base_list_copy))
         return full_guild_list
 
     def get_members(self, guild_id):
