@@ -11,6 +11,7 @@ class PlayerAPI(GuildAPI):
         GuildAPI.__init__(self)
 
     def get_selected_player_data(self, player_id_list):
+        self._login_account()
         player_list = asyncio.run(self._get_basic_player_info_main(player_id_list))
         return player_list
 
