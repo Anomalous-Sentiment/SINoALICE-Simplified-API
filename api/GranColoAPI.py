@@ -72,6 +72,8 @@ class GranColoAPI(BaseAPI):
         # Add the guilds to the ts list
         ts_guild_list.extend(next_10_guilds)
 
+        new_guilds_in_list = [False]
+
         # Iterate until less than 10 guilds returned. If less than 10 guilds, then that is the end of the list. Also exist if all of nect guilds are in list already to avoid infinite loop (May occur when there are more than 10 guilds with same rank at the bottom?? Just a safety measure)
         while len(next_10_guilds) >= 10 or all(new_guilds_in_list):
 
