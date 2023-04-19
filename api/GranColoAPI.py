@@ -57,17 +57,7 @@ class GranColoAPI(BaseAPI):
     async def _get_full_ts_ranks(self, ts, top_50_list, session):
         ts_guild_list = top_50_list
 
-        # Sort guilds in case the LF has updated, but rankings have not
-        ts_guild_list = sorted(ts_guild_list, key=lambda d: d['point'], reverse=True)
-        
-        # Get the guilds surrounding the top guild
-        surrounding_guilds = await self._get_surrounding_guilds(ts, top_50_list[0]['guildDataId'], session=session)
-
-        # Use the guilds surrounding the top 1 guild of TS as the base list
-        ts_guild_list = surrounding_guilds
-
         ts_guild_list = await self._iterate_through_rankings(ts, ts_guild_list, session)
-        ts_guild_list = await self._iterate_through_rankings(ts, ts_guild_list, session, reverse=True)
 
         # Filter out duplicates (Safety measure)
         ts_guild_list = {frozenset(item.items()) : item for item in ts_guild_list}.values()
@@ -102,25 +92,16 @@ class GranColoAPI(BaseAPI):
 
         return full_ts_list
 
-    async def _iterate_through_rankings(self, ts, ts_guild_list, session, reverse=False):
-        # If reverse is true, then get all guilds higher than the guild with highest LF in list,
-        # Else go down the rankings from highest LF to lowest
-        index = -1
-
-        if reverse is True:
-            index = 0
-
+    async def _iterate_through_rankings(self, ts, ts_guild_list, session):
         new_guilds_in_list = [True]
 
-        # Get guilds from the specified starting point of list. Repeat until all surrounding guilds are already in list
+        # Get guilds starting from the end of the list. Repeat until all surrounding guilds are already in list
         while any(new_guilds_in_list):
-            # Sort again for same reason as previously
-            ts_guild_list = sorted(ts_guild_list, key=lambda d: d['point'], reverse=True)
+            # Sort list to ensure newly appended guilds are ordered correctly
+            ts_guild_list = sorted(ts_guild_list, key=lambda d: d['ranking'])
 
-            #Get the surrounding guilds of the first/last guild of the current TS list depending on reverse value
-            surrounding_guilds = await self._get_surrounding_guilds(ts, ts_guild_list[index]['guildDataId'], session=session)
-            surrounding_guilds = sorted(surrounding_guilds, key=lambda d: d['point'], reverse=True)
-
+            #Get the surrounding guilds of the last guild in list
+            surrounding_guilds = await self._get_surrounding_guilds(ts, ts_guild_list[-1]['guildDataId'], session=session)
 
             new_guilds_in_list = []
 
@@ -133,5 +114,4 @@ class GranColoAPI(BaseAPI):
                 else:
                     new_guilds_in_list.append(False)
 
-        ts_guild_list = sorted(ts_guild_list, key=lambda d: d['point'], reverse=True)
         return ts_guild_list
