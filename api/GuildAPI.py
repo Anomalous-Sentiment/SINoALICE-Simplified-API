@@ -17,6 +17,18 @@ class GuildAPI(BaseAPI):
         full_guild_list = asyncio.run(self._get_guild_list_main(base_list_copy))
         return full_guild_list
 
+    def get_selected_guilds(self, base_guild_list):
+        self._login_account()
+        guild_id_list = []
+        # Convert to list of guildDataIds
+        for guild in base_guild_list:
+            guild_id_list.append(guild['guildDataId'])
+
+        # Get the guild details of the guild Id list
+        selected_guild_list = asyncio.run(self._get_selected_guilds_main(guild_id_list))
+        return selected_guild_list
+
+
     def get_members(self, guild_id):
         member_req_payload = {
             'guildDataId': guild_id
@@ -37,6 +49,12 @@ class GuildAPI(BaseAPI):
 
         
         return guild_data
+
+    async def _get_selected_guilds_main(self, selected_guilds):
+        async with aiohttp.ClientSession(BaseAPI.URL) as session:
+            selected_guild_list_data = await self._get_full_guild_details(selected_guilds, session)
+        return selected_guild_list_data
+
 
     async def _get_guild_list_main(self, full_guild_list=[]):
         # Get the guild list for every rank (S, A, B, C, D)
