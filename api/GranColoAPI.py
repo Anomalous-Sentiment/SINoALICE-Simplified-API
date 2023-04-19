@@ -38,7 +38,7 @@ class GranColoAPI(BaseAPI):
 
         return top_50_list
 
-    async def _get_next_10_guilds(self, ts, last_guild_id, session):
+    async def _get_surrounding_guilds(self, ts, last_guild_id, session):
         rev_rank_payload = {
             'guildDataId': last_guild_id,
             'gvgTimeType': ts,
@@ -51,44 +51,26 @@ class GranColoAPI(BaseAPI):
 
         temp_21_list = response['payload']['gvgEventRankingDataList']
 
-        new_index = 10
-
-        # Check if last guild id is at expected location. The last_guild_id should be at idx 10. If not, then
-        # we may have hit the end of the list.
-        # Find the index of the last guild Id if not at expected location
-        while temp_21_list[new_index]['guildDataId'] != last_guild_id:
-            new_index = new_index + 1
-
-
         # Return the list of guilds that come after last_guild_id. Usually 10, but will be less than 10 if there are less than 10 guilds before end the of ranking list
-        return temp_21_list[new_index + 1::]
+        return temp_21_list
 
     async def _get_full_ts_ranks(self, ts, top_50_list, session):
         ts_guild_list = top_50_list
+
+        # Sort guilds in case the LF has updated, but rankings have not
+        ts_guild_list = sorted(ts_guild_list, key=lambda d: d['point'], reverse=True)
         
-        # Get the next 10 guilds using last guild Id
-        next_10_guilds = await self._get_next_10_guilds(ts, top_50_list[-1]['guildDataId'], session=session)
+        # Get the guilds surrounding the top guild
+        surrounding_guilds = await self._get_surrounding_guilds(ts, top_50_list[0]['guildDataId'], session=session)
 
-        # Add the guilds to the ts list
-        ts_guild_list.extend(next_10_guilds)
+        # Use the guilds surrounding the top 1 guild of TS as the base list
+        ts_guild_list = surrounding_guilds
 
-        new_guilds_in_list = [False]
+        ts_guild_list = await self._iterate_through_rankings(ts, ts_guild_list, session)
+        ts_guild_list = await self._iterate_through_rankings(ts, ts_guild_list, session, reverse=True)
 
-        # Iterate until less than 10 guilds returned. If less than 10 guilds, then that is the end of the list. Also exist if all of nect guilds are in list already to avoid infinite loop (May occur when there are more than 10 guilds with same rank at the bottom?? Just a safety measure)
-        while len(next_10_guilds) >= 10 or any(new_guilds_in_list):
-
-            #Get the next 10 guilds again
-            next_10_guilds = await self._get_next_10_guilds(ts, ts_guild_list[-1]['guildDataId'], session=session)
-
-            new_guilds_in_list = []
-
-            for new_guild in next_10_guilds:
-                if new_guild not in ts_guild_list:
-                    # Append to list
-                    ts_guild_list.append(new_guild)
-                    new_guilds_in_list.append(True)
-                else:
-                    new_guilds_in_list.append(False)
+        # Filter out duplicates (Safety measure)
+        ts_guild_list = {frozenset(item.items()) : item for item in ts_guild_list}.values()
 
         # Return the final list
         return ts_guild_list
@@ -119,3 +101,37 @@ class GranColoAPI(BaseAPI):
             full_ts_list = await self._get_full_ts_ranks(ts, ts_top_50, session)
 
         return full_ts_list
+
+    async def _iterate_through_rankings(self, ts, ts_guild_list, session, reverse=False):
+        # If reverse is true, then get all guilds higher than the guild with highest LF in list,
+        # Else go down the rankings from highest LF to lowest
+        index = -1
+
+        if reverse is True:
+            index = 0
+
+        new_guilds_in_list = [True]
+
+        # Get guilds from the specified starting point of list. Repeat until all surrounding guilds are already in list
+        while any(new_guilds_in_list):
+            # Sort again for same reason as previously
+            ts_guild_list = sorted(ts_guild_list, key=lambda d: d['point'], reverse=True)
+
+            #Get the surrounding guilds of the first/last guild of the current TS list depending on reverse value
+            surrounding_guilds = await self._get_surrounding_guilds(ts, ts_guild_list[index]['guildDataId'], session=session)
+            surrounding_guilds = sorted(surrounding_guilds, key=lambda d: d['point'], reverse=True)
+
+
+            new_guilds_in_list = []
+
+            # Only add surrounding guild to list if not in list already
+            for new_guild in surrounding_guilds:
+                if not any(d['gvgEventRankingDataId'] == new_guild['gvgEventRankingDataId'] for d in ts_guild_list):
+                    # Append to list
+                    ts_guild_list.append(new_guild)
+                    new_guilds_in_list.append(True)
+                else:
+                    new_guilds_in_list.append(False)
+
+        ts_guild_list = sorted(ts_guild_list, key=lambda d: d['point'], reverse=True)
+        return ts_guild_list
