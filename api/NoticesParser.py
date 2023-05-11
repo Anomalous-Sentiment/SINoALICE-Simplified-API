@@ -19,10 +19,10 @@ class NoticesParser():
             search_val = 'Maintenance Notice'
 
             # Get the href of the element which links to the Gran Colo notice page
-            maint_page_href = self._get_href_with_str(search_val)
+            maint_page_href = self._get_href_with_str(notices_page_soup, search_val)
 
             full_page_url = NoticesParser.BASE_URL + maint_page_href
-            maint_page_soup = BeautifulSoup(request.urlopen(full_gc_page_url).read(), 'html.parser')
+            maint_page_soup = BeautifulSoup(request.urlopen(full_page_url).read(), 'html.parser')
 
             # Get the start and end dates of the maintenence period
             maint_dict = self._get_header_values(maint_page_soup, 'Maintenance Period')
@@ -50,6 +50,8 @@ class NoticesParser():
 
         header_dict['start'] = start_date
         header_dict['end'] = end_date
+
+        return header_dict
 
 
     def get_gc_dates(self):
