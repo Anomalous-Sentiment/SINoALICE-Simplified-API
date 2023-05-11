@@ -10,16 +10,56 @@ class NoticesParser():
     def __init__(self):
         pass
 
+    def get_maint_dates(self):
+        maint_dict = None
+
+        try:
+            # Get the page html, and parse as soup
+            notices_page_soup = BeautifulSoup(request.urlopen(NoticesParser.BASE_URL + NoticesParser.NOTICES_ENDPOINT).read(), 'html.parser')
+            search_val = 'Maintenance Notice'
+
+            # Get the href of the element which links to the Gran Colo notice page
+            maint_page_href = self._get_href_with_str(search_val)
+
+            full_page_url = NoticesParser.BASE_URL + maint_page_href
+            maint_page_soup = BeautifulSoup(request.urlopen(full_gc_page_url).read(), 'html.parser')
+
+            # Get the start and end dates of the maintenence period
+            maint_dict = self._get_header_values(maint_page_soup, 'Maintenance Period')
+        except PageNotAvailableException:
+            print('Maintenence page not available')
+
+        return maint_dict
+
+    def _get_header_values(self, page_soup, header_text):
+        # Setup
+        header_dict = {}
+
+        # Find the element containing the header_text
+        period_header = page_soup.find('p', class_='sub_heading',string=re.compile(header_text))
+
+        # Move to next sibling element (div containing spans specifying time period)
+        period_div = period_header.find_next_sibling('div')
+
+        # Get the 2 spans containing the start and end dates
+        date_spans = period_div.find_all('span', class_='date-i18n')
+
+        # Get the unix times and parse
+        start_date = datetime.utcfromtimestamp(int(date_spans[0]['date-unix-time']))
+        end_date = datetime.utcfromtimestamp(int(date_spans[1]['date-unix-time']))
+
+        header_dict['start'] = start_date
+        header_dict['end'] = end_date
+
+
     def get_gc_dates(self):
         gc_dates_dict = None
 
         try:
-
-            # Get the page html, and parse as soup
-            notices_page_soup = BeautifulSoup(request.urlopen(NoticesParser.BASE_URL + NoticesParser.NOTICES_ENDPOINT).read(), 'html.parser')
+            search_val = 'Colosseum Event: Gran Colosseum Notice'
 
             # Get the href of the element which links to the Gran Colo notice page
-            colo_page_href = self._get_href_with_str(notices_page_soup)
+            colo_page_href = self._get_href_with_str(search_val)
 
             # Concaternate with base url for full page url
             full_gc_page_url = NoticesParser.BASE_URL + colo_page_href
@@ -28,10 +68,10 @@ class NoticesParser():
             colo_page_soup = BeautifulSoup(request.urlopen(full_gc_page_url).read(), 'html.parser')
 
             # Get the entry dates
-            entry_dict = self._get_entry_dates(colo_page_soup)
+            entry_dict = self._get_header_values(colo_page_soup, 'Preliminaries')
 
             # Get the prelim dates
-            prelim_dict = self._get_prelim_dates(colo_page_soup)
+            entry_dict = self._get_header_values(colo_page_soup, 'Entry Period')
 
             # Get the finals dates
             finals_dict = self._get_finals_dates(colo_page_soup)
@@ -48,9 +88,12 @@ class NoticesParser():
         # return dict containing all dates. If page not available, return None
         return gc_dates_dict
 
-    def _get_href_with_str(self, soup):
+    def _get_href_with_str(self, soup, search_val):
+        # Get the page html, and parse as soup
+        soup = BeautifulSoup(request.urlopen(NoticesParser.BASE_URL + NoticesParser.NOTICES_ENDPOINT).read(), 'html.parser')
+
         # Find the string that contains "Colosseum Event: Gran Colosseum Notice"
-        colo_string = soup.find(string=re.compile('Colosseum Event: Gran Colosseum Notice'))
+        colo_string = soup.find(string=re.compile(search_val))
 
         if colo_string is not None:
             # Find the parent <a> element of the string
