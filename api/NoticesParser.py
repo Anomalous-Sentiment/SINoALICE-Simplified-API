@@ -10,12 +10,17 @@ class NoticesParser():
     def __init__(self):
         pass
 
+    def _get_notices_page_soup(self):
+        # Get the page html, and parse as soup
+        notices_page_soup = BeautifulSoup(request.urlopen(NoticesParser.BASE_URL + NoticesParser.NOTICES_ENDPOINT).read(), 'html.parser')
+        return notices_page_soup
+
     def get_maint_dates(self):
         maint_dict = None
 
         try:
             # Get the page html, and parse as soup
-            notices_page_soup = BeautifulSoup(request.urlopen(NoticesParser.BASE_URL + NoticesParser.NOTICES_ENDPOINT).read(), 'html.parser')
+            notices_page_soup = self._get_notices_page_soup()
             search_val = 'Maintenance Notice'
 
             # Get the href of the element which links to the Gran Colo notice page
@@ -60,8 +65,10 @@ class NoticesParser():
         try:
             search_val = 'Colosseum Event: Gran Colosseum Notice'
 
+            notices_soup = self._get_notices_page_soup()
+
             # Get the href of the element which links to the Gran Colo notice page
-            colo_page_href = self._get_href_with_str(search_val)
+            colo_page_href = self._get_href_with_str(notices_soup, search_val)
 
             # Concaternate with base url for full page url
             full_gc_page_url = NoticesParser.BASE_URL + colo_page_href
@@ -70,10 +77,10 @@ class NoticesParser():
             colo_page_soup = BeautifulSoup(request.urlopen(full_gc_page_url).read(), 'html.parser')
 
             # Get the entry dates
-            entry_dict = self._get_header_values(colo_page_soup, 'Preliminaries')
+            entry_dict = self._get_header_values(colo_page_soup, 'Entry Period')
 
             # Get the prelim dates
-            entry_dict = self._get_header_values(colo_page_soup, 'Entry Period')
+            prelim_dict = self._get_header_values(colo_page_soup, 'Preliminaries')
 
             # Get the finals dates
             finals_dict = self._get_finals_dates(colo_page_soup)
