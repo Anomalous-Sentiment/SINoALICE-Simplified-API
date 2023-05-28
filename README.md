@@ -49,7 +49,14 @@ Again, this is all based on my own experiences as a first timer trying to revers
 
 ## Examples
 
-TBC
+Example of getting guild list:
+```
+from api.GuildAPI import GuildAPI
+
+guild_api = GuildAPI()
+guild_list = guild_api.get_guild_list()
+```
+
 
 ## Credits
 
