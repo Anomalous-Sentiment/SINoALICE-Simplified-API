@@ -74,6 +74,13 @@ class BaseAPI():
         inner_payload["xuid"] = self.x_uid_payment
 
         response = asyncio.run(self._single_main("/api/login", inner_payload, remove_header=["Cookie"]))
+
+        # Check for errors in response
+        if 'errors' in res:
+            # TODO: Check what type of error is returned (Usually be a maintainence error in JP if everything is working properly)
+            # Currently assumes the error is caused by maintenence
+            raise ServerMaintenenceException(res)
+            
         self.session_id = response["payload"]["sessionId"]
 
     def get_action_time(self, old_action_time=0):
@@ -201,3 +208,9 @@ class BaseAPI():
 
 class ExcessTrafficException(Exception):
     pass
+
+class ServerMaintenenceException(Exception):
+    def __init__(self, response, message="Server is undergoing maintenence"):
+        self.response = response
+        self.message = message
+        super().__init__(self.message)
