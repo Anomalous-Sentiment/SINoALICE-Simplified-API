@@ -217,3 +217,8 @@ class ServerMaintenenceException(Exception):
         self.response = response
         self.message = message
         super().__init__(self.message)
+
+    def __str__(self):
+        formatted_payload = json.dumps(self.response, sort_keys=True, indent=4)
+        formatted_msg = f"Error: {self.message}\nResponse: {formatted_payload}"
+        return formatted_msg
