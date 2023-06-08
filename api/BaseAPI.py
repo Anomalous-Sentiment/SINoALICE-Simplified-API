@@ -9,6 +9,7 @@ from .constants.Config import APP_VERSION, UUID_PAYMENT, USER_ID, PRIV_KEY, AES_
 import msgpack, base64, datetime, random, logging, time, urllib3
 from .constants.DeviceInformation import DeviceInfo
 from google_play_scraper import app
+import json
 
 class BasicCrypto():
     def __init__(self):
@@ -75,12 +76,14 @@ class BaseAPI():
 
         response = asyncio.run(self._single_main("/api/login", inner_payload, remove_header=["Cookie"]))
 
+        response['errors'] = 'Test maint error...'
+
         # Check for errors in response
-        if 'errors' in res:
+        if 'errors' in response:
             # TODO: Check what type of error is returned (Usually be a maintainence error in JP if everything is working properly)
             # Currently assumes the error is caused by maintenence
-            raise ServerMaintenenceException(res)
-            
+            raise ServerMaintenenceException(response)
+
         self.session_id = response["payload"]["sessionId"]
 
     def get_action_time(self, old_action_time=0):
