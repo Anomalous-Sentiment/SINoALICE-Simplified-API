@@ -75,7 +75,7 @@ class BaseAPI():
         inner_payload["xuid"] = self.x_uid_payment
 
         response = asyncio.run(self._single_main("/api/login", inner_payload, remove_header=["Cookie"]))
-        
+
         # Check for errors in response
         if 'errors' in response:
             # TODO: Check what type of error is returned (Usually be a maintainence error in JP if everything is working properly)
@@ -198,6 +198,8 @@ class BaseAPI():
                     logging.critical(f"Maximum attempts for {resource} aborting")
                     # Re-throw exception
                     raise
+            except ValueError as decryptError:
+                # Generally a failure to decrypt the response. Possibly due to corrupted data?
 
         return decrypted_data
 
