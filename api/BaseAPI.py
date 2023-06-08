@@ -75,9 +75,7 @@ class BaseAPI():
         inner_payload["xuid"] = self.x_uid_payment
 
         response = asyncio.run(self._single_main("/api/login", inner_payload, remove_header=["Cookie"]))
-
-        response['errors'] = 'Test maint error...'
-
+        
         # Check for errors in response
         if 'errors' in response:
             # TODO: Check what type of error is returned (Usually be a maintainence error in JP if everything is working properly)
