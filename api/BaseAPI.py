@@ -173,7 +173,9 @@ class BaseAPI():
 
     async def _parallel_main(self, resource, payloads, session = None, remove_header=None):
         if session == None:
-            async with aiohttp.ClientSession(BaseAPI.URL) as session:
+            # Disable keep_alive to avoid server disconnect (Disconnect seems to happen when timeout is exceeded.)
+            connector = aiohttp.TCPConnector(force_close=True)
+            async with aiohttp.ClientSession(BaseAPI.URL, connector=connector) as session:
                 ret = await asyncio.gather(*[self._async_post(resource, payload, session, remove_header) for payload in payloads])
         else:
             ret = await asyncio.gather(*[self._async_post(resource, payload, session, remove_header) for payload in payloads])
@@ -200,6 +202,7 @@ class BaseAPI():
                     raise
             except ValueError as decryptError:
                 # Generally a failure to decrypt the response. Possibly due to corrupted data?
+                print('Failed to decrypt response, retrying...')
 
         return decrypted_data
 
