@@ -51,7 +51,9 @@ class GuildAPI(BaseAPI):
         return guild_data
 
     async def _get_selected_guilds_main(self, selected_guilds):
-        async with aiohttp.ClientSession(BaseAPI.URL) as session:
+        timeout = aiohttp.ClientTimeout(total=None)
+        connector = aiohttp.TCPConnector(force_close=True)
+        async with aiohttp.ClientSession(BaseAPI.URL, connector=connector, timeout=timeout) as session:
             selected_guild_list_data = await self._get_full_guild_details(selected_guilds, session)
         return selected_guild_list_data
 
@@ -61,7 +63,9 @@ class GuildAPI(BaseAPI):
         # Guild ranks are represented as number in requests. (D = 0, C = 1, B = 2, A = 3, S = 4)
         rank_list = [0, 1, 2, 3, 4]
 
-        async with aiohttp.ClientSession(BaseAPI.URL) as session:
+        timeout = aiohttp.ClientTimeout(total=None)
+        connector = aiohttp.TCPConnector(force_close=True)
+        async with aiohttp.ClientSession(BaseAPI.URL, connector=connector, timeout=timeout) as session:
             # Call async function to get guilds in rank and wait for all to finish
             guild_rank_lists = await asyncio.gather(*[self._get_rank_guilds(rank, session) for rank in rank_list])
 
@@ -117,7 +121,7 @@ class GuildAPI(BaseAPI):
                 payload_list.append(new_payload)
 
             # Send a request to retrieve every page asynchronously
-            remainder_pages_res_list = await asyncio.gather(*[self._async_post(GuildAPI.GUILD_RANKS_ENDPOINT, payload, session) for payload in payload_list])
+            remainder_pages_res_list = await self._parallel_main(GuildAPI.GUILD_RANKS_ENDPOINT, payload_list, session)
 
             # Join all pages together for list of all guilds in the given rank
             for res in remainder_pages_res_list:
@@ -136,10 +140,9 @@ class GuildAPI(BaseAPI):
             }
             payload_list.append(guild_req_payload)
 
-        for chunk in self._chunks(payload_list, 500):
-            # Get full guild details of guild in guild list
-            temp_list = await asyncio.gather(*[self._async_post(GuildAPI.GUILD_DATA_ENDPOINT, payload, session) for payload in chunk])
-            res_list.extend(temp_list)
+        # Get full guild details of guild in guild list
+        temp_list = await self._parallel_main(GuildAPI.GUILD_DATA_ENDPOINT, payload_list)
+        res_list.extend(temp_list)
 
         final_guild_data_list = []
         # Extract guild data from rseponses and append to list if not errors
