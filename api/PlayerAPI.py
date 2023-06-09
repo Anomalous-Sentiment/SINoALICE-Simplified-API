@@ -55,7 +55,7 @@ class PlayerAPI(GuildAPI):
             member_req_payloads.append(new_member_payload)
 
         timeout = aiohttp.ClientTimeout(total=None)
-        connector = aiohttp.TCPConnector(force_close=True)
+        connector = aiohttp.TCPConnector(force_close=True, limit=PlayerAPI.CONCURRENT_CONNECTIONS)
         async with aiohttp.ClientSession(GuildAPI.URL, connector=connector, timeout=timeout) as session:
             # For every guild in list, get the member list asynchronously
             member_res_list = await self._parallel_main(GuildAPI.GUILD_MEMBERS_ENDPOINT, member_req_payloads, session)
@@ -84,7 +84,7 @@ class PlayerAPI(GuildAPI):
             player_data_payloads.append(new_player_data_payload)
 
         timeout = aiohttp.ClientTimeout(total=None)
-        connector = aiohttp.TCPConnector(force_close=True)
+        connector = aiohttp.TCPConnector(force_close=True, limit=PlayerAPI.CONCURRENT_CONNECTIONS)
         async with aiohttp.ClientSession(GuildAPI.URL, connector=connector, timeout=timeout) as session:
             # For each member, call the API endpoint to get their player data
             temp_list = await self._parallel_main(PlayerAPI.PLAYER_DATA_ENDPOINT, player_data_payloads, session)

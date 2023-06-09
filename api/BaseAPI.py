@@ -34,6 +34,7 @@ class BasicCrypto():
 class BaseAPI():
     URL = "https://api-sinoalice-us.pokelabo.jp"
     EXCESS_TRAFFIC = 14014
+    CONCURRENT_CONNECTIONS = 600
 
     def __init__(self):
         self.crypto = BasicCrypto()
@@ -174,11 +175,12 @@ class BaseAPI():
     async def _parallel_main(self, resource, payloads, session = None, remove_header=None):
         if session == None:
             # Disable keep_alive to avoid server disconnect (Disconnect seems to happen when timeout is exceeded.)
-            connector = aiohttp.TCPConnector(force_close=True)
+            connector = aiohttp.TCPConnector(force_close=True, limit=BaseAPI.CONCURRENT_CONNECTIONS)
             async with aiohttp.ClientSession(BaseAPI.URL, connector=connector) as session:
                 ret = await asyncio.gather(*[self._async_post(resource, payload, session, remove_header) for payload in payloads])
         else:
             ret = await asyncio.gather(*[self._async_post(resource, payload, session, remove_header) for payload in payloads])
+            
         return ret
 
     async def _async_post(self, resource, payload, session, remove_header=None):

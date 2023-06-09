@@ -52,7 +52,7 @@ class GuildAPI(BaseAPI):
 
     async def _get_selected_guilds_main(self, selected_guilds):
         timeout = aiohttp.ClientTimeout(total=None)
-        connector = aiohttp.TCPConnector(force_close=True)
+        connector = aiohttp.TCPConnector(force_close=True, limit=BaseAPI.CONCURRENT_CONNECTIONS)
         async with aiohttp.ClientSession(BaseAPI.URL, connector=connector, timeout=timeout) as session:
             selected_guild_list_data = await self._get_full_guild_details(selected_guilds, session)
         return selected_guild_list_data
@@ -64,7 +64,7 @@ class GuildAPI(BaseAPI):
         rank_list = [0, 1, 2, 3, 4]
 
         timeout = aiohttp.ClientTimeout(total=None)
-        connector = aiohttp.TCPConnector(force_close=True)
+        connector = aiohttp.TCPConnector(force_close=True, limit=BaseAPI.CONCURRENT_CONNECTIONS)
         async with aiohttp.ClientSession(BaseAPI.URL, connector=connector, timeout=timeout) as session:
             # Call async function to get guilds in rank and wait for all to finish
             guild_rank_lists = await asyncio.gather(*[self._get_rank_guilds(rank, session) for rank in rank_list])
