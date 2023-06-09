@@ -34,7 +34,7 @@ class BasicCrypto():
 class BaseAPI():
     URL = "https://api-sinoalice-us.pokelabo.jp"
     EXCESS_TRAFFIC = 14014
-    CONCURRENT_CONNECTIONS = 600
+    CONCURRENT_CONNECTIONS = 200
 
     def __init__(self):
         self.crypto = BasicCrypto()
@@ -205,6 +205,7 @@ class BaseAPI():
             except ValueError as decryptError:
                 # Generally a failure to decrypt the response. Possibly due to corrupted data?
                 print('Failed to decrypt response, retrying...')
+
 
         return decrypted_data
 
