@@ -54,9 +54,11 @@ class PlayerAPI(GuildAPI):
 
             member_req_payloads.append(new_member_payload)
 
-        async with aiohttp.ClientSession(GuildAPI.URL) as session:
+        timeout = aiohttp.ClientTimeout(total=None)
+        connector = aiohttp.TCPConnector(force_close=True)
+        async with aiohttp.ClientSession(GuildAPI.URL, connector=connector, timeout=timeout) as session:
             # For every guild in list, get the member list asynchronously
-            member_res_list = await asyncio.gather(*[self._async_post(GuildAPI.GUILD_MEMBERS_ENDPOINT, payload, session) for payload in member_req_payloads])
+            member_res_list = await self._parallel_main(GuildAPI.GUILD_MEMBERS_ENDPOINT, member_req_payloads, session)
 
             # Add the member list to the player list
             for idx, res in enumerate(member_res_list):
@@ -81,19 +83,19 @@ class PlayerAPI(GuildAPI):
 
             player_data_payloads.append(new_player_data_payload)
 
-        async with aiohttp.ClientSession(GuildAPI.URL) as session:
-            # Split requests into chucks to avoid disconnect from server
-            for chunk in self._chunks(player_data_payloads, 500):
-                # For each member, call the API endpoint to get their player data
-                temp_list = await asyncio.gather(*[self._async_post(PlayerAPI.PLAYER_DATA_ENDPOINT, payload, session) for payload in chunk])
+        timeout = aiohttp.ClientTimeout(total=None)
+        connector = aiohttp.TCPConnector(force_close=True)
+        async with aiohttp.ClientSession(GuildAPI.URL, connector=connector, timeout=timeout) as session:
+            # For each member, call the API endpoint to get their player data
+            temp_list = await self._parallel_main(PlayerAPI.PLAYER_DATA_ENDPOINT, player_data_payloads, session)
 
-                # Add the payloads of each res body to the list
-                for res in temp_list:
-                    if 'payload' in res:
-                        player_data_res_payload_list.append(res['payload'])
-                    else:
-                        # Error with request
-                        print(res)
+            # Add the payloads of each res body to the list
+            for res in temp_list:
+                if 'payload' in res:
+                    player_data_res_payload_list.append(res['payload'])
+                else:
+                    # Error with request
+                    print(res)
 
         return player_data_res_payload_list
 
