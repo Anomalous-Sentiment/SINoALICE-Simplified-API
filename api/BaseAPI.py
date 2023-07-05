@@ -12,8 +12,14 @@ from google_play_scraper import app
 import json
 
 class BasicCrypto():
-    def __init__(self):
+    def __init__(self, logger = None):
         self.aes = AES_KEY
+
+        # Use the logger passed in if it exists, else use own logger
+        if logger is None:
+            self.logger = logging.getLogger(__name__)
+        else:
+            self.logger = logger
 
     def encrypt(self, payload):
         packed_request_content = msgpack.packb(payload)
@@ -64,7 +70,7 @@ class BaseAPI():
             self.app_version = sino_app_data['version']
         except Exception as Argument:
             # Failed to get latest app version string
-            print('Error getting latest app version')
+            self.logger.error('Error getting latest app version')
 
 
         inner_payload = self.device_info.get_device_info_dict()
@@ -101,6 +107,8 @@ class BaseAPI():
             if decrypted_response["errors"][0]["code"] == BaseAPI.EXCESS_TRAFFIC:
                 logging.warning(f"EXCESS_TRAFFIC Exception {response.request.path_url}")
                 raise ExcessTrafficException("")
+
+        # Code 14039 = Guild does not exist
 
         return decrypted_response
 
@@ -196,15 +204,22 @@ class BaseAPI():
                     decrypted_data = self.crypto._decrypt_response(data)
                 
             except ExcessTrafficException as e:
-                time.sleep(timeout_duration)
+                # Unused?
+                await asyncio.sleep(timeout_duration)
                 timeout_duration += 5
                 if timeout_duration > 30:
-                    logging.critical(f"Maximum attempts for {resource} aborting")
+                    self.logger.critical(f"Maximum attempts for {resource} aborting")
                     # Re-throw exception
                     raise
             except ValueError as decryptError:
                 # Generally a failure to decrypt the response. Possibly due to corrupted data?
-                print('Failed to decrypt response, retrying...')
+                await asyncio.sleep(timeout_duration)
+                timeout_duration += 5
+                if timeout_duration > 30:
+                    self.logger.critical(f"Maximum attempts for {resource} aborting")
+                    # Re-throw exception
+                    raise
+                self.logger.error('Failed to decrypt response, retrying...')
 
 
         return decrypted_data
