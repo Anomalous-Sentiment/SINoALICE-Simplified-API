@@ -220,7 +220,8 @@ class BaseAPI():
                     # Re-throw exception
                     raise
                 self.logger.error('Failed to decrypt response, retrying...')
-
+            except Exception as e: 
+                self.logger.exception('Fatal error. Failed to get data')
 
         return decrypted_data
 
