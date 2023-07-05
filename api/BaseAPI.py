@@ -204,6 +204,7 @@ class BaseAPI():
                     decrypted_data = self.crypto._decrypt_response(data)
                 
             except ExcessTrafficException as e:
+                self.logger.error('Excess traffic exception')
                 # Unused?
             except ValueError as decryptError:
                 # Generally a failure to decrypt the response. Possibly due to corrupted data?
