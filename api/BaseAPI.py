@@ -205,23 +205,23 @@ class BaseAPI():
                 
             except ExcessTrafficException as e:
                 # Unused?
-                await asyncio.sleep(timeout_duration)
-                timeout_duration += 5
-                if timeout_duration > 30:
-                    self.logger.critical(f"Maximum attempts for {resource} aborting")
-                    # Re-throw exception
-                    raise
             except ValueError as decryptError:
                 # Generally a failure to decrypt the response. Possibly due to corrupted data?
+                self.logger.error('Failed to decrypt response')
                 await asyncio.sleep(timeout_duration)
                 timeout_duration += 5
                 if timeout_duration > 30:
                     self.logger.critical(f"Maximum attempts for {resource} aborting")
                     # Re-throw exception
                     raise
-                self.logger.error('Failed to decrypt response, retrying...')
             except Exception as e: 
                 self.logger.exception('Fatal error. Failed to get data')
+                await asyncio.sleep(timeout_duration)
+                timeout_duration += 5
+                if timeout_duration > 30:
+                    self.logger.critical(f"Maximum attempts for {resource} aborting")
+                    # Re-throw exception
+                    raise
 
         return decrypted_data
 
