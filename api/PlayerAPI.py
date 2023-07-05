@@ -100,5 +100,6 @@ class PlayerAPI(GuildAPI):
         return player_data_res_payload_list
 
     def get_basic_player_info(self, player_list=[]):
+        self._login_account()
         basic_player_data_list = asyncio.run(self._get_basic_player_info_main(player_list))
         return basic_player_data_list
