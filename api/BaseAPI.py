@@ -15,12 +15,6 @@ class BasicCrypto():
     def __init__(self, logger = None):
         self.aes = AES_KEY
 
-        # Use the logger passed in if it exists, else use own logger
-        if logger is None:
-            self.logger = logging.getLogger(__name__)
-        else:
-            self.logger = logger
-
     def encrypt(self, payload):
         packed_request_content = msgpack.packb(payload)
         iv = packed_request_content[0:16]
@@ -42,7 +36,14 @@ class BaseAPI():
     EXCESS_TRAFFIC = 14014
     CONCURRENT_CONNECTIONS = 200
 
-    def __init__(self):
+    def __init__(self, logger = None):        
+        # Use the logger passed in if it exists, else use own logger
+        if logger is None:
+            self.logger = logging.getLogger(__name__)
+            self.logger.setLevel(logging.INFO)
+        else:
+            self.logger = logger
+
         self.crypto = BasicCrypto()
 
         self.uuid_payment = UUID_PAYMENT
@@ -109,6 +110,7 @@ class BaseAPI():
                 raise ExcessTrafficException("")
 
         # Code 14039 = Guild does not exist
+        # Code 11089 = Failed to get member list
 
         return decrypted_response
 
