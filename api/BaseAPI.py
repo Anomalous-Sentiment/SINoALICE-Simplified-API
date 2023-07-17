@@ -106,15 +106,12 @@ class BaseAPI():
 
     def _handle_response(self, response):
         decrypted_response = self.crypto._decrypt_response(response)
-        logging.debug(f"from {response.request.path_url} {decrypted_response}")
 
         if decrypted_response.get("errors", None) is not None:
             if decrypted_response["errors"][0]["code"] == BaseAPI.EXCESS_TRAFFIC:
-                logging.warning(f"EXCESS_TRAFFIC Exception {response.request.path_url}")
                 raise ExcessTrafficException("")
             elif decrypted_response["errors"][0]["code"] == BaseAPI.NOT_LOGGED_IN:
                 # Not logged in error code
-                logging.warning(f" Exception {response.request.path_url}")
                 raise InvalidSessionException("Session ID not valid")
 
         # Code 14039 = Guild does not exist
@@ -229,6 +226,7 @@ class BaseAPI():
                     # Re-throw exception
                     raise
             except InvalidSessionException as sessionError:
+                self.logger.error('Session ID not valid. Re-logging...')
                 # Get asyncio mutex lock. This is to ensure only one coroutine is entering executes this section at a time
                 # Multiple concurrent executions can cause self._login_account to be run multiple times.
                 async with self.lock:
