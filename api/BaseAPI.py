@@ -34,6 +34,7 @@ class BasicCrypto():
 class BaseAPI():
     URL = "https://api-sinoalice-us.pokelabo.jp"
     EXCESS_TRAFFIC = 14014
+    NOT_LOGGED_IN = 40001
     CONCURRENT_CONNECTIONS = 200
 
     def __init__(self, logger = None):        
@@ -53,6 +54,9 @@ class BaseAPI():
         self.session_id = ''
         self.headers = {}
         self.device_info = DeviceInfo()
+
+        # Mutex lock for asyncio parallel requests when getting new session
+        self.lock = asyncio.Lock()
 
         # Set the initial app version
         self.app_version = APP_VERSION
@@ -108,6 +112,10 @@ class BaseAPI():
             if decrypted_response["errors"][0]["code"] == BaseAPI.EXCESS_TRAFFIC:
                 logging.warning(f"EXCESS_TRAFFIC Exception {response.request.path_url}")
                 raise ExcessTrafficException("")
+            elif decrypted_response["errors"][0]["code"] == BaseAPI.NOT_LOGGED_IN:
+                # Not logged in error code
+                logging.warning(f" Exception {response.request.path_url}")
+                raise InvalidSessionException("Session ID not valid")
 
         # Code 14039 = Guild does not exist
         # Code 11089 = Failed to get member list
@@ -203,7 +211,10 @@ class BaseAPI():
                 async with session.post(resource, data=processed_payload, headers=self.headers) as response:
                     data = await response.read()
 
-                    decrypted_data = self.crypto._decrypt_response(data)
+                    # Handle response. Can raise InvalidSessionException
+                    decrypted_data = self._handle_response(data)
+
+                    #decrypted_data = self.crypto._decrypt_response(data)
                 
             except ExcessTrafficException as e:
                 self.logger.error('Excess traffic exception')
@@ -217,6 +228,21 @@ class BaseAPI():
                     self.logger.critical(f"Maximum attempts for {resource} aborting")
                     # Re-throw exception
                     raise
+            except InvalidSessionException as sessionError:
+                # Get asyncio mutex lock. This is to ensure only one coroutine is entering executes this section at a time
+                # Multiple concurrent executions can cause self._login_account to be run multiple times.
+                async with self.lock:
+                    # Check if session Id of class is same as payload
+                    if self.session_id == payload['sessionId']:
+                        # If same, re-login to get new session ID
+                        self._login_account()
+
+                    # Update payload session ID and get new payload that uses new session ID
+                    processed_payload = self._prepare_request("POST", resource, payload, remove_header=None)
+
+                    # Set decrypted data to none (To retry request)
+                    decrypted_data = None
+
             except Exception as e: 
                 self.logger.exception('Fatal error. Failed to get data')
                 await asyncio.sleep(timeout_duration)
@@ -247,3 +273,6 @@ class ServerMaintenenceException(Exception):
         formatted_payload = json.dumps(self.response, sort_keys=True, indent=4)
         formatted_msg = f"Error: {self.message}\nResponse: {formatted_payload}"
         return formatted_msg
+
+class InvalidSessionException(Exception):
+    pass
