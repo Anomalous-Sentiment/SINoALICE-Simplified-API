@@ -230,8 +230,10 @@ class BaseAPI():
                 # Get asyncio mutex lock. This is to ensure only one coroutine is entering executes this section at a time
                 # Multiple concurrent executions can cause self._login_account to be run multiple times.
                 async with self.lock:
+                    # Decrypt the req to get the current sessionId
+                    decrypted_req = self.crypto._decrypt_response(processed_payload)
                     # Check if session Id of class is same as payload
-                    if self.session_id == payload['sessionId']:
+                    if self.session_id == decrypted_req['sessionId']:
                         # If same, re-login to get new session ID
                         self._login_account()
 
