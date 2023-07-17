@@ -105,7 +105,7 @@ class BaseAPI():
         return final_time
 
     def _handle_response(self, response):
-        decrypted_response = self.crypto._decrypt_response(response.content)
+        decrypted_response = self.crypto._decrypt_response(response)
         logging.debug(f"from {response.request.path_url} {decrypted_response}")
 
         if decrypted_response.get("errors", None) is not None:
