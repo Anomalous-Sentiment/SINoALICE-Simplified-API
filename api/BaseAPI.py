@@ -10,6 +10,8 @@ import msgpack, base64, datetime, random, logging, time, urllib3
 from .constants.DeviceInformation import DeviceInfo
 from google_play_scraper import app
 import json
+import nest_asyncio
+nest_asyncio.apply()
 
 class BasicCrypto():
     def __init__(self, logger = None):
