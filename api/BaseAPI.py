@@ -86,7 +86,18 @@ class BaseAPI():
         inner_payload["uuid"] = self.uuid_payment
         inner_payload["xuid"] = self.x_uid_payment
 
-        response = asyncio.run(self._single_main("/api/login", inner_payload, remove_header=["Cookie"]))
+        loop = None
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:  # 'RuntimeError: There is no current event loop...'
+            loop = None
+
+        if loop and loop.is_running():
+            # Already in asyncio event loop. Run the async function until complete with current event loop
+            response = loop.run_until_complete(self._single_main("/api/login", inner_payload, remove_header=["Cookie"]))
+        else:
+            # Not running in asyncio event loop. Execute function using asyncio.run
+            response = asyncio.run(self._single_main("/api/login", inner_payload, remove_header=["Cookie"]))
 
         # Check for errors in response
         if 'errors' in response:
